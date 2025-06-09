@@ -1,6 +1,16 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useGame } from './Gamecontext'
 
-const Setting = ({ player1, setPlayer1, player2, setPlayer2, score, setScore }) => {
+
+const Setting = () => {
+  const { player1, setPlayer1, player2, setPlayer2, score, setScore } = useGame()
+  const navigate = useNavigate()
+
+  const handleHelp = () => {
+    navigate('/help')
+  }
+
   return (
      <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
       <div className=" bg-white/20 rounded-lg shadow-lg mx-auto" style={{
@@ -47,7 +57,8 @@ const Setting = ({ player1, setPlayer1, player2, setPlayer2, score, setScore }) 
         />
         </div>
         <div className='flex justify-between items-center mt-6 px-8'>
-          <button className="flex items-center bg-blue-800 text-white px-9 py-4 rounded-md hover:bg-white/10 transition text-lg">
+          <button className="flex items-center bg-blue-800 text-white px-9 py-4 rounded-md hover:bg-white/10 transition text-lg"
+          onClick={handleHelp}>
           <span className="material-icons mr-2">info</span>
           Help
           </button>
