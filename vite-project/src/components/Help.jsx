@@ -5,13 +5,15 @@ import Dice3 from '../Images/Dice3.png'
 import Dice4 from '../Images/Dice4.png'
 import Dice5 from '../Images/Dice5.png'
 import Dice6 from '../Images/Dice6.png'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const Help = () => {
     const navigate = useNavigate()
+    const location = useLocation();
     
     const handleContinue = () => {
-        navigate('/') // Go back to the previous page
+        const fallback = location.state?.from || '/';
+        navigate(fallback)
       }
   return (
     <>

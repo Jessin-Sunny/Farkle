@@ -8,7 +8,11 @@ const Setting = () => {
   const navigate = useNavigate()
 
   const handleHelp = () => {
-    navigate('/help')
+    navigate('/help', { state: { from: '/settings' } });
+  }
+
+  const handleStart = () => {
+    navigate('/match')
   }
 
   return (
@@ -62,7 +66,8 @@ const Setting = () => {
           <span className="material-icons mr-2">info</span>
           Help
           </button>
-          <button className="flex items-center bg-green-700 text-white px-9 py-4 rounded-md hover:bg-white/10 transition text-lg">
+          <button className="flex items-center bg-green-700 text-white px-9 py-4 rounded-md hover:bg-white/10 transition text-lg"
+          onClick={handleStart}>
           <span className='material-icons mr-2'>play_arrow</span>
           Start
           </button>
