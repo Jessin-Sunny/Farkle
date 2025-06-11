@@ -11,10 +11,12 @@ const Help = () => {
     const navigate = useNavigate()
     const location = useLocation();
     
+    
     const handleContinue = () => {
         const fallback = location.state?.from || '/';
         navigate(fallback)
       }
+    
   return (
     <>
     <div className='ml-10' style={{ fontFamily: "Roboto, sans-serif" }}>
