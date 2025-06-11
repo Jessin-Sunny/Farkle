@@ -1,10 +1,11 @@
-import { useGame } from './Gamecontext'
-import wood from '../Images/wooden.jpeg'
-import paper from '../Images/paper.jpeg'
-import { useNavigate } from 'react-router-dom'
-import Dice from './Dice'
-import { useEffect, useState } from 'react'
-
+import { useGame } from './Gamecontext';
+import wood from '../Images/wooden.jpeg';
+import paper from '../Images/paper.jpeg';
+import { useNavigate } from 'react-router-dom';
+import Dice from './Dice';
+import { useEffect, useState } from 'react';
+import { hasScore } from '../Calculatescore';
+import { useLocation } from 'react-router-dom';
 
 const Match = () => {
     const [turn , setTurn] = useState(0);   //indicates whose turn 0 -> Player 1 and 1 -> Player 2
@@ -19,19 +20,44 @@ const Match = () => {
     const [dices2, setDices2] = useState([false, false, false, false, false, false]);
 
     /*Current values of each dices of the player 1 */
-    const [diceValues1, setdiceValues1] = useState([1,1,1,1,1,1])
+    const [diceValues1, setdiceValues1] = useState([1,1,1,1,1,1]);
     /*Current values of each dices of the player 2 */
-    const [diceValues2, setdiceValues2] = useState([1,1,1,1,1,1])
+    const [diceValues2, setdiceValues2] = useState([1,1,1,1,1,1]);
 
-   useEffect(() => {
-        rollUnselectedDice(diceValues1, setdiceValues1, dices1);
-        rollUnselectedDice(diceValues2, setdiceValues2, dices2);
+    /*Initial Rolling of full dices tracking */
+    const location = useLocation();
+
+    useEffect(() => {
+        // Only roll if coming fresh
+        if (!location.state?.rolled) {
+            rollUnselectedDice(diceValues1, setdiceValues1, dices1);
+            rollUnselectedDice(diceValues2, setdiceValues2, dices2);
+        }
+        //loading saved dice values after clicking help
+        const saved1 = sessionStorage.getItem('diceValues1');
+        const saved2 = sessionStorage.getItem('diceValues2');
+        const savedDices1 = sessionStorage.getItem('dices1');
+        const savedDices2 = sessionStorage.getItem('dices2');
+
+        if (saved1 && saved2) {
+            setdiceValues1(JSON.parse(saved1));
+            setdiceValues2(JSON.parse(saved2));
+            setDices1(JSON.parse(savedDices1));
+            setDices2(JSON.parse(savedDices2));
+        }
     }, []);
+
+
     const navigate = useNavigate()
     const { player1, player2, score } = useGame()
 
     const handleHelp = () => {
-        navigate('/help', { state: { from: '/match' } });
+        /* Saving dice values before going to help page*/
+        sessionStorage.setItem('diceValues1', JSON.stringify(diceValues1));
+        sessionStorage.setItem('diceValues2', JSON.stringify(diceValues2));
+        sessionStorage.setItem('dices1', JSON.stringify(dices1));
+        sessionStorage.setItem('dices2', JSON.stringify(dices2));
+        navigate('/help', { state: { from: '/match', rolled: true } });
     }
 
     const handleQuit = () => {
@@ -63,11 +89,8 @@ const Match = () => {
             return updateSelect;
         });
     }
-
     //console.log(dices1)
     //console.log(dices2)
-
-
 
     const updateDiceValue1 = (index, value) => {
         setdiceValues1((diceValues1) => {
@@ -114,7 +137,9 @@ const Match = () => {
         <div className='flex justify-around mt-5'>
             <div>
                 <h2 style={{fontFamily:'Roboto, sans-serif', fontSize: '24px'}}>{player1}</h2>
-                <div className="rounded-lg shadow-lg mx-auto overflow-hidden flex flex-col" style={{
+                <div className={`rounded-lg shadow-lg mx-auto overflow-hidden flex flex-col
+                ${turn == 0 ? 'border-4 border-blue-700 rounded-xl' : ''}`} 
+                    style={{
                     width: 'min(40vw, 1000px)',
                     height: 'min(40vw, 1000px)'}}>
                     <div className='h-[30%] w-full'
@@ -165,7 +190,9 @@ const Match = () => {
             </div>
             <div>
                 <h2 style={{fontFamily:'Roboto, sans-serif', fontSize: '24px'}}>{player2}</h2>
-                <div className="rounded-lg shadow-lg mx-auto overflow-hidden flex flex-col" style={{
+                <div className={`rounded-lg shadow-lg mx-auto overflow-hidden flex flex-col
+                ${turn == 1 ? 'border-4 border-blue-700 rounded-xl' : ''}`} 
+                 style={{
                     width: 'min(40vw, 1000px)',
                     height: 'min(40vw, 1000px)'}}>
                     <div className='h-[30%] w-full'

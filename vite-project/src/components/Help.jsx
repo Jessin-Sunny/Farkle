@@ -11,11 +11,10 @@ const Help = () => {
     const navigate = useNavigate()
     const location = useLocation();
     
-    
     const handleContinue = () => {
         const fallback = location.state?.from || '/';
-        navigate(fallback)
-      }
+        navigate(fallback, { state: { rolled: true } });
+    };
     
   return (
     <>
