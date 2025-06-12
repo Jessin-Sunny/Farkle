@@ -4,11 +4,11 @@ import paper from '../Images/paper.jpeg';
 import { useNavigate } from 'react-router-dom';
 import Dice from './Dice';
 import { useEffect, useState } from 'react';
-import { hasScore } from '../Calculatescore';
+import { hasScore, selectedScore } from '../Calculatescore';
 import { useLocation } from 'react-router-dom';
 
 const Match = () => {
-    const [turn , setTurn] = useState(0);   //indicates whose turn 0 -> Player 1 and 1 -> Player 2
+    const [turn , setTurn] = useState(1);   //indicates whose turn 0 -> Player 1 and 1 -> Player 2
 
     /*Array of size two for maintaining scores of two players*/
     const [total, setTotal] = useState([0, 0]);
@@ -18,6 +18,10 @@ const Match = () => {
     /*To keep track of those dices that are currently been selected */
     const [dices1, setDices1] = useState([false, false, false, false, false, false]);
     const [dices2, setDices2] = useState([false, false, false, false, false, false]);
+
+    /*To keep values of those dices that are selected */
+    const [selectedDvalue1, setSelecteddvalue1] = useState([]);
+     const [selectedDvalue2, setSelecteddvalue2] = useState([]);
 
     /*Current values of each dices of the player 1 */
     const [diceValues1, setdiceValues1] = useState([1,1,1,1,1,1]);
@@ -46,6 +50,36 @@ const Match = () => {
             setDices2(JSON.parse(savedDices2));
         }
     }, []);
+
+    useEffect(() => {
+        if (turn === 0) {
+            const selected = dices1
+                .map((isSelected, index) => isSelected ? diceValues1[index] : null)
+                .filter(val => val !== null);
+            setSelecteddvalue1(selected);
+        } else {
+            const selected = dices2
+                .map((isSelected, index) => isSelected ? diceValues2[index] : null)
+                .filter(val => val !== null);
+            setSelecteddvalue2(selected);
+        }
+    }, [dices1, dices2, turn]);
+
+    useEffect(() => {
+        if (turn === 0) {
+            if (hasScore(selectedDvalue1)) {
+                setSelect(prev => [selectedScore(selectedDvalue1), prev[1]]);
+            } else {
+                setSelect(prev => [0, prev[1]]);
+            }
+        } else {
+            if (hasScore(selectedDvalue2)) {
+                setSelect(prev => [prev[0], selectedScore(selectedDvalue2)]);
+            } else {
+                setSelect(prev => [prev[0], 0]);
+            }
+        }
+    }, [selectedDvalue1, selectedDvalue2, turn]);
 
 
     const navigate = useNavigate()
@@ -228,6 +262,7 @@ const Match = () => {
                 <div className="flex justify-start gap-15 mt-4">
                     <button
                         className="flex items-center bg-blue-700 text-white px-15 py-4 rounded-md hover:bg-white/10 transition text-lg"
+                        onClick={handleRollAgain}
                     >
                         Score and Roll Again
                     </button>
