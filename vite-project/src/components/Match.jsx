@@ -125,12 +125,15 @@ const Match = () => {
         checkAndSetTurn();
     };
 
+    //for rolling all six dices
     const startRoll = () => {
         let rollCount = 0;
         const maxRolls = 10;
         const rollInterval = 60;
+        //used begin and end since it takse time to update start and stop
         const begin = start === 0 ? 6 : 0;
         const end = stop === 5 ? 11 : 5;
+        /*
         const animateRoll = () => {
             return new Promise((resolve) => {
                 const interval = setInterval(() => {
@@ -157,18 +160,56 @@ const Match = () => {
                 }, rollInterval);
             });
         };
+        */
+       const animateRoll = () => {
+            return new Promise((resolve) => {
+                const interval = setInterval(() => {
+                    setDiceValues(prev => prev.map((val, idx) => {
+                        if (idx >= begin && idx <= end) {
+                            return Math.floor(Math.random() * 6) + 1;
+                        }
+                        return val;
+                    }));
+                    rollCount++;
+
+                    if (rollCount >= maxRolls) {
+                        clearInterval(interval);
+
+                        const finalValues = Array.from({ length: end - begin + 1 }, () => Math.floor(Math.random() * 6) + 1);
+
+                        let fullUpdated = [];
+
+                        setDiceValues(prev => {
+                            fullUpdated = prev.map((val, idx) => {
+                                if (idx >= begin && idx <= end) {
+                                    return finalValues[idx - begin];
+                                }
+                                return val;
+                            });
+                            return fullUpdated;
+                        });
+
+                        // Slight delay to ensure setDiceValues is applied first
+                        setTimeout(() => resolve(fullUpdated), 0);
+                    }
+                }, rollInterval);
+            });
+        };
         const checkAndSetTurn = async () => {
             let result = await animateRoll();
-            console.log(result.slice(start, stop + 1))
-            if (hasScore(result.slice(start,stop + 1), true)) {
+            console.log(result.slice(begin, end + 1));
+            //console.log(hasScore(result.slice(start, stop + 1), true))
+            console.log(hasScore(result.slice(begin, end + 1), true))
+            if (hasScore(result.slice(begin, end + 1), true)) {
                 return;
             }
-            //toggleTurn();
-            //startRoll();
+            toggleTurn();
+            startRoll();
         };
         checkAndSetTurn();
     }
 
+    //for rolling unselected dices
     const nextRoll = () => {
         const nextDices = [];   //stores indices of those dice that need to be rolled
         for(let i=start; i<=stop; i++){
@@ -347,6 +388,31 @@ const Match = () => {
         nextRoll();
     };
 
+    const handleScoreandPass = () => {
+        //updating total and resetting select and round
+        setTotal(prev => {
+            const updated = [...prev];
+            updated[turn] += select[turn] + round[turn];
+            return updated;
+        });
+
+        setSelect(prev => {
+            const updated = [...prev];
+            updated[turn] = 0;
+            return updated;
+        });
+
+        setRound(prev => {
+            const updated = [...prev];
+            updated[turn] = 0;
+            return updated;
+        });
+        resetScoresandDices();
+        //Passing Turn to other player and his/her rolling dices
+        toggleTurn();
+        startRoll();
+    }
+
     return (
         <>
         <div className='flex justify-around mt-5'>
@@ -397,7 +463,7 @@ const Match = () => {
 
                     <button
                         className="flex items-center bg-green-700 text-white px-18 py-4 rounded-md hover:bg-white/10 transition text-lg"
-
+                        onClick={turn === 0 ? handleScoreandPass : () => {}}
                     >
                         Score and Pass
                     </button>
@@ -450,7 +516,7 @@ const Match = () => {
 
                     <button
                         className="flex items-center bg-green-700 text-white px-18 py-4 rounded-md hover:bg-white/10 transition text-lg"
-
+                        onClick={turn === 1 ? handleScoreandPass : () => {}}
                     >
                         Score and Pass
                     </button>
