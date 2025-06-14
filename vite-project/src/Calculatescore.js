@@ -1,9 +1,10 @@
-export function hasScore(diceValues) {
+export function hasScore(diceValues, initialRoll) {
     /*
     maintaining counts of each dice values
     starting from index 1 to 6 for direct counting with index
     Ignoring index 0
     Need Array of size 7
+    initialRoll will be set to true, so that at initiall roll if any one dice scores it return true
     */
     const counts = Array(7).fill(0)
 
@@ -44,8 +45,11 @@ export function hasScore(diceValues) {
     totalUsed += counts[1]; // each 1 is 100
     totalUsed += counts[5]; // each 5 is 50
 
+    //initialRoll will be set to true, so that at initiall roll if any one dice scores it return true
+    if(initialRoll)
+        return totalUsed > 0;
     // If all dice were used for scoring, return true
-    return totalUsed === totalDice;
+    return totalUsed == totalDice
 }
 
 export function selectedScore(selectedDices) {
@@ -55,7 +59,7 @@ export function selectedScore(selectedDices) {
 
     selectedDices.forEach((value, i) => {
     const num = Number(value); // safer than parseInt for single digits
-    console.log(`Value ${i}:`, value, '=>', num);
+    //console.log(`Value ${i}:`, value, '=>', num);
     if (!Number.isInteger(num) || num < 1 || num > 6) {
         console.error('Invalid dice value:', value);
     } else {
