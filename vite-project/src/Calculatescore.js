@@ -1,12 +1,12 @@
-export function hasScore(diceValues, initialRoll) {
+export function hasScore(diceValues, roll) {
     /*
     maintaining counts of each dice values
     starting from index 1 to 6 for direct counting with index
     Ignoring index 0
     Need Array of size 7
-    initialRoll will be set to true, so that at initiall roll if any one dice scores it return true
+    roll will be set to true, if it is rolling case and set to false if it is selection of updating select
     */
-    const counts = Array(7).fill(0)
+    const counts = Array(7).fill(0);
 
     diceValues.forEach(value => {
         counts[value] ++ ;
@@ -46,7 +46,7 @@ export function hasScore(diceValues, initialRoll) {
     totalUsed += counts[5]; // each 5 is 50
 
     //initialRoll will be set to true, so that at initiall roll if any one dice scores it return true
-    if(initialRoll)
+    if(roll)
         return totalUsed > 0;
     // If all dice were used for scoring, return true
     return totalUsed == totalDice

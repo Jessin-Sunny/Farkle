@@ -125,6 +125,137 @@ const Match = () => {
         checkAndSetTurn();
     };
 
+    const startRoll = () => {
+        let rollCount = 0;
+        const maxRolls = 10;
+        const rollInterval = 60;
+        const begin = start === 0 ? 6 : 0;
+        const end = stop === 5 ? 11 : 5;
+        const animateRoll = () => {
+            return new Promise((resolve) => {
+                const interval = setInterval(() => {
+                    setDiceValues(prev => prev.map((val, idx) => {
+                        if (idx >= begin && idx <= end) {
+                            return Math.floor(Math.random() * 6) + 1;
+                        }
+                        return val;
+                    }));
+                    rollCount++;
+
+                    if (rollCount >= maxRolls) {
+                        clearInterval(interval);
+                        const finalValues = Array.from({ length: end - begin + 1 }, () => Math.floor(Math.random() * 6) + 1);
+                        setDiceValues(prev => prev.map((val, idx) => {
+                            if (idx >= begin && idx <= end) {
+                                return finalValues[idx - begin]; // align with finalValues index
+                            }
+                            return val;
+                        }));
+                        // Delay resolve slightly to ensure state is applied
+                        setTimeout(() => resolve(finalValues), 0);
+                    }
+                }, rollInterval);
+            });
+        };
+        const checkAndSetTurn = async () => {
+            let result = await animateRoll();
+            console.log(result.slice(start, stop + 1))
+            if (hasScore(result.slice(start,stop + 1), true)) {
+                return;
+            }
+            //toggleTurn();
+            //startRoll();
+        };
+        checkAndSetTurn();
+    }
+
+    const nextRoll = () => {
+        const nextDices = [];   //stores indices of those dice that need to be rolled
+        for(let i=start; i<=stop; i++){
+            if(!selectedDices[i] && !lockedDices[i]){
+                nextDices.push(i);
+            }
+        }
+        //console.log(nextDices);
+        let rollCount = 0;
+        const maxRolls = 10;
+        const rollInterval = 60;
+        const finalValues = [];
+        const animateRoll = () => {
+            return new Promise((resolve) => {
+                const interval = setInterval(() => {
+                    setDiceValues(prev =>
+                        prev.map((val, idx) =>
+                            nextDices.includes(idx) ? Math.floor(Math.random() * 6) + 1 : val
+                        )
+                    );
+                    rollCount++;
+
+                    if (rollCount >= maxRolls) {
+                        clearInterval(interval);
+
+                        
+                        setDiceValues(prev => {
+                            const updated = prev.map((val, idx) => {
+                                const newVal = nextDices.includes(idx)
+                                    ? Math.floor(Math.random() * 6) + 1
+                                    : val;
+                                finalValues[idx] = newVal;
+                                return newVal;
+                            });
+                            return updated;
+                        });
+                        // Delay resolve slightly to ensure state is applied
+                        setTimeout(() => resolve(finalValues), 0);
+                    }
+                }, rollInterval);
+            });
+        };
+
+        const checkAndSetTurn = async () => {
+            //console.log(diceValues);
+            let result = await animateRoll(); // roll all dice
+            //console.log(result);
+            let checkDices = nextDices.map(i => finalValues[i]);
+            //console.log(checkDices)
+            //console.log(hasScore(checkDices,true));
+            if (hasScore(checkDices, true)) {
+                return;
+            }
+            resetScoresandDices();
+            toggleTurn();
+            startRoll();    
+        };
+        checkAndSetTurn();
+    }
+
+    const resetScoresandDices = () => {
+        /*resetting locked and selected Dices */
+        const updatedSelectedDices = [...selectedDices];
+        const updatedLockedDices = [...lockedDices];
+
+        for (let i = start; i <= stop; i++) {
+            updatedSelectedDices[i] = false; // unselect
+            updatedLockedDices[i] = false;    // unlock
+        }
+
+        setSelectedDices(updatedSelectedDices);
+        setLockedDices(updatedLockedDices);
+
+        //resetting round and select
+        setRound(prev => {
+            const updated = [...prev];
+            updated[turn] = 0;
+            return updated;
+        });
+        
+        setSelect(prev => {
+            const updated = [...prev];
+            updated[turn] = 0;
+            return updated;
+        });
+    }
+
 
     const navigate = useNavigate()
     const { player1, player2, score } = useGame()
@@ -148,7 +279,7 @@ const Match = () => {
     const toggleTurn = () => {
         if(turn == 0) {
             setTurn(1);
-            setStart(5);
+            setStart(6);
             setStop(11);
         }
         else {
@@ -177,7 +308,7 @@ const Match = () => {
     const getSelectedDiceValues = () => {
         const selected = [];
         for (let i = start; i <= stop; i++) {
-            if (selectedDices[i]) {
+            if (selectedDices[i] && !lockedDices[i]) {
                 selected.push(diceValues[i]);
             }
         }
@@ -191,7 +322,7 @@ const Match = () => {
 
         for (let i = start; i <= stop; i++) {
             if (selectedDices[i]) {
-                updatedSelectedDices[i] = false; // unselect
+                //updatedSelectedDices[i] = false; // unselect
                 updatedLockedDices[i] = true;    // lock
             }
         }
@@ -211,6 +342,9 @@ const Match = () => {
             updated[turn] = 0;
             return updated;
         });
+
+        //Roll for the next round
+        nextRoll();
     };
 
     return (
