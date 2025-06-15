@@ -32,6 +32,9 @@ const Match = () => {
     /*To store selected dices values*/
     const [selectedValues, setSelectedValues] = useState([]);
 
+    //setting winner
+    const [winner, setWinner] = useState(null);
+
     useEffect(() => {
         if (!location.state?.rolled) {
             initialRoll();
@@ -85,6 +88,17 @@ const Match = () => {
         }
     }, [selectedValues]);
 
+    //Checking to see if a player reaches final score to declare winner
+    const checkForWinner = () => {
+        const newTotal = total[turn] + round[turn] + select[turn];
+        if (newTotal >= score) {
+            const winnerName = turn === 0 ? player1 : player2;
+            setWinner(winnerName); // Set winner to trigger modal
+            sessionStorage.clear(); // Optional
+            return; // Stop further execution
+        }
+    }
+
     /*Initial Rolling and Dice Values and setting the turn*/
     const initialRoll = () => {
         let rollCount = 0;
@@ -133,34 +147,6 @@ const Match = () => {
         //used begin and end since it takse time to update start and stop
         const begin = start === 0 ? 6 : 0;
         const end = stop === 5 ? 11 : 5;
-        /*
-        const animateRoll = () => {
-            return new Promise((resolve) => {
-                const interval = setInterval(() => {
-                    setDiceValues(prev => prev.map((val, idx) => {
-                        if (idx >= begin && idx <= end) {
-                            return Math.floor(Math.random() * 6) + 1;
-                        }
-                        return val;
-                    }));
-                    rollCount++;
-
-                    if (rollCount >= maxRolls) {
-                        clearInterval(interval);
-                        const finalValues = Array.from({ length: end - begin + 1 }, () => Math.floor(Math.random() * 6) + 1);
-                        setDiceValues(prev => prev.map((val, idx) => {
-                            if (idx >= begin && idx <= end) {
-                                return finalValues[idx - begin]; // align with finalValues index
-                            }
-                            return val;
-                        }));
-                        // Delay resolve slightly to ensure state is applied
-                        setTimeout(() => resolve(finalValues), 0);
-                    }
-                }, rollInterval);
-            });
-        };
-        */
        const animateRoll = () => {
             return new Promise((resolve) => {
                 const interval = setInterval(() => {
@@ -314,6 +300,7 @@ const Match = () => {
     }
 
     const handleQuit = () => {
+        sessionStorage.clear();
         navigate('/setting')
     }
 
@@ -360,10 +347,20 @@ const Match = () => {
         //Locking the already selected dice to the next round
         const updatedSelectedDices = [...selectedDices];
         const updatedLockedDices = [...lockedDices];
+        //checking no dice is selected or not
+        let noneSelected = 1;
+        for (let i = start; i <= stop; i++) {
+            if (selectedDices[i]) {
+                noneSelected = 0;
+            }
+        }
+        if(noneSelected){
+            return;
+        }
 
         for (let i = start; i <= stop; i++) {
             if (selectedDices[i]) {
-                //updatedSelectedDices[i] = false; // unselect
+                updatedSelectedDices[i] = false; // unselect
                 updatedLockedDices[i] = true;    // lock
             }
         }
@@ -384,8 +381,17 @@ const Match = () => {
             return updated;
         });
 
-        //Roll for the next round
-        nextRoll();
+        //console.log(select[turn]);
+        //Roll for the next round if select has score
+        if(select[turn]){
+            nextRoll();
+        }
+        //farkle
+        else {
+            resetScoresandDices();
+            toggleTurn();
+            startRoll();
+        }
     };
 
     const handleScoreandPass = () => {
@@ -408,6 +414,8 @@ const Match = () => {
             return updated;
         });
         resetScoresandDices();
+        //Checking Winner
+        checkForWinner();
         //Passing Turn to other player and his/her rolling dices
         toggleTurn();
         startRoll();
@@ -538,6 +546,41 @@ const Match = () => {
                 Quit
             </button>
         </div>
+        {winner && (
+            <div className="fixed inset-0 flex justify-center items-center backdrop-blur-sm z-50">
+                <div
+                    className="bg-white/20 backdrop-blur-md rounded-lg shadow-lg p-8 text-center text-white"
+                    style={{ width: 'min(100vw, 1000px)', height: '500px' }}
+                >
+                    <h2 className="text-3xl font-bold mb-4 animate-bounce">
+                        🎉Congratulations!!! 🎉
+                    </h2>
+                    <h2 className="text-2xl font-bold text-white mb-4 animate-pulse">
+                       🏆  {winner} Wins 🏆 
+                    </h2>
+                    <h2 className="text-2xl font-bold text-white mb-4 animate-pulse">
+                        👏 {winner === player1 ? player2 : player1} Well Played 👏
+                    </h2>
+                    <div className="flex gap-4 justify-center mt-6">
+                        <button
+                            className="px-4 py-2 bg-white text-black rounded hover:bg-gray-200"
+                            onClick={() => navigate('/setting')}
+                        >
+                            Go to Settings
+                        </button>
+                        
+                        <a
+                            href="https://github.com/Jessin-Sunny"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-white text-black rounded hover:bg-gray-200 inline-block text-center"
+                        >
+                            👨‍💻 View Developer Profile (GitHub)
+                        </a>
+                    </div>
+                </div>
+            </div>
+        )}
         </>
   )
 }
