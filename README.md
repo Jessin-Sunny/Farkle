@@ -18,7 +18,9 @@ Farkle is a fast-paced dice game where players roll six dice to score points thr
 <img src="Images/SettingsPage.jpg" alt="Settings" width="700"/>
 
 ### ❓ Help Page
+<img src="Images/HelpPage.jpg" alt="Help" width="700"/>
 
 ### 🎮 Game Page 
 
 ### 🏆 Winners Page 
+<img src="Images/WinnersPage.jpg" alt="Winner" width="700"/>
