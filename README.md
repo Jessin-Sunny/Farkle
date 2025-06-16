@@ -53,8 +53,8 @@ Farkle is a fast-paced dice game where players roll six dice to score points thr
 ### 1️⃣ Clone the repository
 
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/Jessin-Sunny/Farkle.git
+cd Farkle
 ```
 ### 2️⃣ Install dependencies
 During installation choose vite-project -> React -> JavaScript <br>
