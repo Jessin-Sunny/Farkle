@@ -55,7 +55,7 @@ Farkle is a fast-paced dice game where players roll six dice to score points thr
 ```bash
 git clone https://github.com/your-username/your-repo-name.git
 cd your-repo-name
-
+```
 ### 2️⃣ Install dependencies
 ```bash
 npm create vite@latest
@@ -63,7 +63,8 @@ cd vite-project
 npm install
 npm i react-router-dom
 npm install tailwindcss
-
+```
 ### 3️⃣ Start the development server
 ```bash
 npm run dev
+```
