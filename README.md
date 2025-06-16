@@ -10,5 +10,5 @@ Farkle is a fast-paced dice game where players roll six dice to score points thr
 - If none of the dice score in a roll, it's a Farkle, and the turn ends with no points.
 - If all 6 dice score in one turn, the player can roll all dice again.
 - First player to reach score wins!
-## 📷 Scoring
+## 🔢 Scoring
 <img src="Images/Rules.jpg" alt="Rules" width="500"/>
