@@ -57,7 +57,7 @@ git clone https://github.com/your-username/your-repo-name.git
 cd your-repo-name
 ```
 ### 2️⃣ Install dependencies
-During installation choose vite-project -> React -> JavaScript
+During installation choose vite-project -> React -> JavaScript <br>
 For more details about tailwindCSS please refer [tailwindCSS](https://tailwindcss.com/docs/installation/using-vite)
 ```bash
 npm create vite@latest
