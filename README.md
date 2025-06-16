@@ -47,3 +47,11 @@ Farkle is a fast-paced dice game where players roll six dice to score points thr
 
 ### 🌐 Deployment
 - Deployed via **GitHub Pages**
+
+## 🚀 Run Locally
+
+### 1️⃣ Clone the repository
+
+```bash
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
