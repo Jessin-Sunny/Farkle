@@ -35,6 +35,9 @@ const Match = () => {
     //setting winner
     const [winner, setWinner] = useState(null);
 
+    //for informatory message for user
+    const [info, setInfo] = useState({visible: false, to: 0, message: ''});
+
     useEffect(() => {
         if (!location.state?.rolled) {
             initialRoll();
@@ -53,8 +56,10 @@ const Match = () => {
         const saved5 = sessionStorage.getItem('round');
         const saved6 = sessionStorage.getItem('total');
         const saved7 = sessionStorage.getItem('turn');
+        const saved8 = sessionStorage.getItem('start');
+        const saved9 = sessionStorage.getItem('stop');
 
-        if (saved1 && saved2 && saved3 && saved4 && saved5 && saved6 && saved7) {
+        if (saved1 && saved2 && saved3 && saved4 && saved5 && saved6 && saved7 && saved8 && saved9) {
             setDiceValues(JSON.parse(saved1));
             setSelectedDices(JSON.parse(saved2));
             setLockedDices(JSON.parse(saved3));
@@ -62,6 +67,8 @@ const Match = () => {
             setRound(JSON.parse(saved5));
             setTotal(JSON.parse(saved6));
             setTurn(JSON.parse(saved7));
+            setStart(JSON.parse(saved8));
+            setStop(JSON.parse(saved9));
         }
     }, []);
 
@@ -128,10 +135,12 @@ const Match = () => {
             if (hasScore(result.slice(0,6), true)) {
                 return;
             }
+            farkle();
             toggleTurn();
             if (hasScore(result.slice(6,12), true)) {
                 return;
             }
+            farkle();
             toggleTurn();
             // Neither player has a scoring combo — reroll and try again
             checkAndSetTurn();
@@ -183,12 +192,13 @@ const Match = () => {
         };
         const checkAndSetTurn = async () => {
             let result = await animateRoll();
-            console.log(result.slice(begin, end + 1));
+            //console.log(result.slice(begin, end + 1));
             //console.log(hasScore(result.slice(start, stop + 1), true))
-            console.log(hasScore(result.slice(begin, end + 1), true))
+            //console.log(hasScore(result.slice(begin, end + 1), true))
             if (hasScore(result.slice(begin, end + 1), true)) {
                 return;
             }
+            farkle();
             toggleTurn();
             startRoll();
         };
@@ -250,12 +260,67 @@ const Match = () => {
                 return;
             }
             resetScoresandDices();
+            farkle();
             toggleTurn();
             startRoll();    
         };
         checkAndSetTurn();
     }
 
+    //used for rolling additional by the player itself on succesfull rounds
+    const bonusRoll = () => {
+        let rollCount = 0;
+        const maxRolls = 10;
+        const rollInterval = 60;
+        const animateRoll = () => {
+            return new Promise((resolve) => {
+                const interval = setInterval(() => {
+                    setDiceValues(prev => prev.map((val, idx) => {
+                        if (idx >= start && idx <= stop) {
+                            return Math.floor(Math.random() * 6) + 1;
+                        }
+                        return val;
+                    }));
+                    rollCount++;
+
+                    if (rollCount >= maxRolls) {
+                        clearInterval(interval);
+
+                        const finalValues = Array.from({ length: stop - start + 1 }, () => Math.floor(Math.random() * 6) + 1);
+
+                        let fullUpdated = [];
+
+                        setDiceValues(prev => {
+                            fullUpdated = prev.map((val, idx) => {
+                                if (idx >= start && idx <= stop) {
+                                    return finalValues[idx - start];
+                                }
+                                return val;
+                            });
+                            return fullUpdated;
+                        });
+
+                        // Slight delay to ensure setDiceValues is applied first
+                        setTimeout(() => resolve(fullUpdated), 0);
+                    }
+                }, rollInterval);
+            });
+        };
+        const checkAndSetTurn = async () => {
+            let result = await animateRoll();
+            console.log(result.slice(start, stop + 1));
+            //console.log(hasScore(result.slice(start, stop + 1), true))
+            console.log(hasScore(result.slice(start, stop + 1), true))
+            if (hasScore(result.slice(start, stop + 1), true)) {
+                return;
+            }
+            farkle();
+            toggleTurn();
+            startRoll();
+        };
+        checkAndSetTurn();
+    }
+    
     const resetScoresandDices = () => {
         /*resetting locked and selected Dices */
         const updatedSelectedDices = [...selectedDices];
@@ -283,7 +348,6 @@ const Match = () => {
         });
     }
 
-
     const navigate = useNavigate()
     const { player1, player2, score } = useGame()
 
@@ -296,6 +360,8 @@ const Match = () => {
         sessionStorage.setItem('round', JSON.stringify(round));
         sessionStorage.setItem('total', JSON.stringify(total));
         sessionStorage.setItem('turn', JSON.stringify(turn));
+        sessionStorage.setItem('start', JSON.stringify(start));
+        sessionStorage.setItem('stop', JSON.stringify(stop));
         navigate('/help', { state: { from: '/match', rolled: true } });
     }
 
@@ -347,16 +413,18 @@ const Match = () => {
         //Locking the already selected dice to the next round
         const updatedSelectedDices = [...selectedDices];
         const updatedLockedDices = [...lockedDices];
-        //checking no dice is selected or not
-        let noneSelected = 1;
+        //used for checking if no dice is selected or not
+        let noneSelected = true;
         for (let i = start; i <= stop; i++) {
             if (selectedDices[i]) {
-                noneSelected = 0;
+                noneSelected = false;
             }
         }
         if(noneSelected){
+            noSelectInfo();
             return;
         }
+        
 
         for (let i = start; i <= stop; i++) {
             if (selectedDices[i]) {
@@ -381,6 +449,27 @@ const Match = () => {
             return updated;
         });
 
+        //used to check if all dices are locked
+        // Check if all dice are locked
+        //Bonus Roll
+        let allLocked = true;
+        for (let i = start; i <= stop; i++) {
+            if (!updatedLockedDices[i]) {
+                allLocked = false;
+                break;
+            }
+        }
+
+        if (allLocked) {
+            // Unlock all dice and reroll
+            for (let i = start; i <= stop; i++) {
+                updatedLockedDices[i] = false;
+            }
+            setLockedDices(updatedLockedDices); // apply changes
+            bonusRoll();
+            return;
+        }
+            
         //console.log(select[turn]);
         //Roll for the next round if select has score
         if(select[turn]){
@@ -388,6 +477,7 @@ const Match = () => {
         }
         //farkle
         else {
+            farkle();
             resetScoresandDices();
             toggleTurn();
             startRoll();
@@ -401,6 +491,7 @@ const Match = () => {
             updated[turn] += select[turn] + round[turn];
             return updated;
         });
+        roundScoreInfo();
 
         setSelect(prev => {
             const updated = [...prev];
@@ -421,6 +512,62 @@ const Match = () => {
         startRoll();
     }
 
+    const wrongMove = () => {
+        const name = turn == 0 ? player1 : player2
+        setInfo({
+            visible: true,
+            to: turn == 0 ? 1 : 0,
+            message: `Please Wait...it's ${name} turn`
+        })
+
+        setTimeout(() => {
+            setInfo(prev => ({ ...prev, visible: false }));
+        }, 3000);
+    };
+
+    const farkle = () => {
+        setInfo({
+            visible: true,
+            to: turn,
+            message: 'Farkle!'
+        })
+        setTimeout(() => {
+            setInfo(prev => ({ ...prev, visible: false }));
+        }, 3000);
+    };
+
+    const noSelectInfo = () => {
+        setInfo({
+            visible: true,
+            to: turn,
+            message: 'Please select dices'
+        })
+        setTimeout(() => {
+            setInfo(prev => ({ ...prev, visible: false }));
+        }, 3000);
+    };
+
+    const roundScoreInfo = () => {
+        const points = round[turn] + select[turn]
+        if(points >= 1000) {
+            setInfo({
+                visible: true,
+                to: turn,
+                message: `Bravo! You Scored ${points}`
+            });
+        }
+        else {
+            setInfo({
+                visible: true,
+                to: turn,
+                message: `You Scored ${points}`
+            });
+        }
+        setTimeout(() => {
+            setInfo(prev => ({ ...prev, visible: false }));
+        }, 3000);
+    }
+
     return (
         <>
         <div className='flex justify-around mt-5'>
@@ -436,9 +583,25 @@ const Match = () => {
                         backgroundImage:`url(${paper})`
                     }}
                     >
-                        <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Total: {total[0]} / {score}</h4>
-                        <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Round: {round[0]}</h4>
-                        <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Selected: {select[0]}</h4>
+                        <div>
+                            <div>
+                                <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Total: {total[0]} / {score}</h4>
+                                <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Round: {round[0]}</h4>
+                                <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Selected: {select[0]}</h4>
+                            </div>
+                            {info.visible && info.to == 0 &&(
+                                <div>
+                                    <h4
+                                        className=" text-white text-2xl font-bold animate-pulse text-center mt-10"
+                                        style={{
+                                            textShadow: '0 0 8px #f00, 0 0 16px #f00, 0 0 24px #f00'
+                                        }}
+                                        >
+                                        {info.message}
+                                    </h4>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className='h-[70%] w-full'
                     style={{
@@ -464,14 +627,14 @@ const Match = () => {
                 <div className="flex justify-end gap-15 mt-4">
                     <button
                         className="flex items-center bg-blue-700 text-white px-15 py-4 rounded-md hover:bg-white/10 transition text-lg"
-                        onClick={turn === 0 ? handleScoreandRollAgain : () => {}}
+                        onClick={turn === 0 ? handleScoreandRollAgain : wrongMove}
                     >
                         Score and Roll Again
                     </button>
 
                     <button
                         className="flex items-center bg-green-700 text-white px-18 py-4 rounded-md hover:bg-white/10 transition text-lg"
-                        onClick={turn === 0 ? handleScoreandPass : () => {}}
+                        onClick={turn === 0 ? handleScoreandPass : wrongMove}
                     >
                         Score and Pass
                     </button>
@@ -489,9 +652,25 @@ const Match = () => {
                         backgroundImage:`url(${paper})`
                     }}
                     >
-                        <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Total: {total[1]} / {score}</h4>
-                        <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Round: {round[1]}</h4>
-                        <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Selected: {select[1]}</h4>
+                        <div>
+                            <div>
+                                <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Total: {total[1]} / {score}</h4>
+                                <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Round: {round[1]}</h4>
+                                <h4 className='kaushan-script-regular mt-3 ml-7' style={{fontSize:'24px'}}>Selected: {select[1]}</h4>
+                            </div>
+                            {info.visible && info.to == 1 &&(
+                                <div>
+                                    <h4
+                                        className=" text-white text-2xl font-bold animate-pulse text-center mt-10"
+                                        style={{
+                                            textShadow: '0 0 8px #f00, 0 0 16px #f00, 0 0 24px #f00'
+                                        }}
+                                        >
+                                        {info.message}
+                                    </h4>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className='h-[70%] w-full'
                     style={{
@@ -517,14 +696,14 @@ const Match = () => {
                 <div className="flex justify-start gap-15 mt-4">
                     <button
                         className="flex items-center bg-blue-700 text-white px-15 py-4 rounded-md hover:bg-white/10 transition text-lg"
-                        onClick={turn === 1 ? handleScoreandRollAgain : () => {}}
+                        onClick={turn === 1 ? handleScoreandRollAgain : wrongMove}
                     >
                         Score and Roll Again
                     </button>
 
                     <button
                         className="flex items-center bg-green-700 text-white px-18 py-4 rounded-md hover:bg-white/10 transition text-lg"
-                        onClick={turn === 1 ? handleScoreandPass : () => {}}
+                        onClick={turn === 1 ? handleScoreandPass : wrongMove}
                     >
                         Score and Pass
                     </button>
