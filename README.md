@@ -27,3 +27,23 @@ Farkle is a fast-paced dice game where players roll six dice to score points thr
 
 ### 🏆 Winners Page 
 <img src="Images/WinnersPage.jpg" alt="Winner" width="700"/>
+
+## 🧰 Tech Stack
+
+### ⚙️ Frontend
+- **React.js** – UI library for building interactive components
+- **Vite** – Lightning-fast development server and bundler
+- **Tailwind CSS** – Utility-first CSS framework for fast styling
+
+### 🎲 Game Logic
+- Custom turn-based game engine using React state
+- Dice animation with `setInterval` and React hooks
+- Scoring system and rule enforcement based on Farkle mechanics
+
+### 📦 Tooling
+- **npm** – Package manager
+- **Git** – Version control
+- **Google Fonts** – Custom fonts for polished UI
+
+### 🌐 Deployment
+- Deployed via **GitHub Pages**
